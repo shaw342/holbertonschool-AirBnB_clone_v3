@@ -76,4 +76,4 @@ class FileStorage:
         self.reload()
         
     def count(self, cls=None):
-        return len([v for v in FileStorage.__objects.values() if isinstance(v, cls)])
+        return len(self.all(cls))
