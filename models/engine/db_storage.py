@@ -64,11 +64,12 @@ class DBStorage:
         if obj is not None:
             self.__session.delete(obj)
     
-    def get(self,cls,id):
-        """get"""
-        
-        key  = cls.__name__ + "." + id
-        return self.__session.get(key, None)
+    def get(self, cls, id):
+        m = models.storage.all(cls)
+        for value in m.values():
+            if value.id == id:
+                return value
+        return None
 
     def reload(self):
         """reloads data from the database"""
@@ -82,4 +83,13 @@ class DBStorage:
         self.__session.remove()
         
     def count(self, cls=None):
-        return len([v for v in self.all(cls)])
+        """count"""
+        return len([v for v in models.storage.all(cls)])
+    
+    def get(self, cls, id):
+        """get"""
+        m = models.storage.all(cls)
+        for value in m.values():
+            if value.id == id:
+                return value
+        return None
