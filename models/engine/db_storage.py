@@ -82,4 +82,4 @@ class DBStorage:
         self.__session.remove()
         
     def count(self, cls=None):
-        return len(self.all(cls))
+        return len([v for v in self.all(cls)])
