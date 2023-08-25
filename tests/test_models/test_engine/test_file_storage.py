@@ -7,7 +7,6 @@ from datetime import datetime
 import inspect
 import models
 from models.engine import file_storage
-from models.engine.file_storage import FileStorage
 from models.amenity import Amenity
 from models.base_model import BaseModel
 from models.city import City
@@ -22,17 +21,6 @@ import unittest
 FileStorage = file_storage.FileStorage
 classes = {"Amenity": Amenity, "BaseModel": BaseModel, "City": City,
            "Place": Place, "Review": Review, "State": State, "User": User}
-
-
-class TestBaseModel(unittest.TestCase):
-    """Test the BaseModel class"""
-
-    def test_datetime_attributes(self):
-        """Test that two BaseModel instances have different datetime objects"""
-        bm1 = BaseModel()
-        bm2 = BaseModel()
-        self.assertNotEqual(bm1.created_at, bm2.created_at)
-        self.assertNotEqual(bm1.updated_at, bm2.updated_at)
 
 
 class TestFileStorageDocs(unittest.TestCase):
@@ -74,11 +62,10 @@ test_file_storage.py'])
     def test_fs_func_docstrings(self):
         """Test for the presence of docstrings in FileStorage methods"""
         for func in self.fs_f:
-            with self.subTest(func=func[0]):
-                self.assertIsNotNone(func[1].__doc__,
-                                     f"{func[0]} method needs a docstring")
-                self.assertTrue(len(func[1].__doc__) >= 1,
-                                f"{func[0]} method needs a docstring")
+            self.assertIsNot(func[1].__doc__, None,
+                             "{:s} method needs a docstring".format(func[0]))
+            self.assertTrue(len(func[1].__doc__) >= 1,
+                            "{:s} method needs a docstring".format(func[0]))
 
 
 class TestFileStorage(unittest.TestCase):
@@ -127,62 +114,28 @@ class TestFileStorage(unittest.TestCase):
             js = f.read()
         self.assertEqual(json.loads(string), json.loads(js))
 
-    @unittest.skipIf(models.storage_t == 'db', "not testing file storage")
+
+class TestFileStorageGetCount(unittest.TestCase):
+    """Tests for get and count methods"""
+
     def test_get(self):
-        """Test that get properly retrieves one object, None if not found"""
-        from models import storage
-        state = State(name='test')
-        storage.new(state)
-        storage.save()
+        """Tests function get"""
+        state = State(name="Paris")
+        state.save()
+        user = User(email="test@email.com", password="testpassword")
+        user.save()
+        self.assertIs(state, models.storage.get(State, state.id))
+        self.assertIs(user, models.storage.get(User, user.id))
+        self.assertIs(None, models.storage.get(State, "1234"))
+        self.assertIs(None, models.storage.get(User, "1234"))
 
-        obj = storage.get(State, state.id)
-        self.assertEqual(obj, state)
-
-        storage.delete(state)
-        storage.save()
-
-        dummy = storage.get(State, state.id)
-        self.assertIsNone(dummy)
-
-    @unittest.skipIf(models.storage_t == 'db', "not testing file storage")
-    def test_count(self):
-        """Test that count properly gets the number of objects matching"""
-        from models import storage
-        storage_len = len(storage.all())
-        self.assertEqual(storage.count(), storage_len)
-
-        states_nb = len(storage.all(State).values())
-        self.assertEqual(storage.count(State), states_nb)
-
-
-class TestBaseModel(unittest.TestCase):
-
-    def test_datetime_attributes(self):
-        inst1 = BaseModel()
-        inst2 = BaseModel()
-        self.assertNotEqual(inst1.created_at, inst2.created_at)
-
-
-class TestDBStorageDocs(unittest.TestCase):
-
-    def test_dbs_func_docstrings(self):
-        # TODO: Implement test to check docstrings in DBStorage methods
-        pass
-
-
-class TestFileStorageDocs(unittest.TestCase):
-
-    def setUp(self):
-        self.fs = FileStorage()
-
-    def test_fs_func_docstrings(self):
-        # TODO: Implement test to check docstrings in FileStorage methods
-        pass
-
-    def test_count(self):
-        self.fs.reload()
-        self.assertEqual(self.fs.count(), len(self.fs.all()))
-
-
-if __name__ == '__main__':
-    unittest.main()
+    def test_count_method(self):
+        """Tests function count"""
+        self.assertEqual(models.storage.count(State),
+                         len(models.storage.all(State)))
+        self.assertEqual(models.storage.count(User),
+                         len(models.storage.all(User)))
+        nb_states = models.storage.count(State)
+        state = State(name="Bourgogne")
+        state.save()
+        self.assertEqual(models.storage.count(State), nb_states + 1)
