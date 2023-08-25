@@ -49,8 +49,7 @@ class FileStorage:
             json_objects[key] = self.__objects[key].to_dict()
         with open(self.__file_path, 'w') as f:
             json.dump(json_objects, f)
-            
-    
+
     def reload(self):
         """deserializes the JSON file to __objects"""
         try:
@@ -71,16 +70,16 @@ class FileStorage:
     def close(self):
         """call reload() method for deserializing the JSON file to objects"""
         self.reload()
-        
+
     def count(self, cls=None):
         """count"""
         return len([v for v in models.storage.all(cls)])
-    
+
     def get(self, cls, id):
         """get"""
         m = models.storage.all(cls)
         for value in m.values():
             if value.id == id:
                 return value
-        
+
         return None
